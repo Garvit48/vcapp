@@ -36,9 +36,9 @@ class _HomePageState extends State<HomePage> {
 
   void matchmake() async {
     print("Started");
-    socket = await Socket.connect("192.168.217.1", 5050);
+    socket = await Socket.connect("3.105.228.41", 5050);
     
-
+    print("Started");
     socket!.listen((List<int> recvEncData) async {
 
 
@@ -97,6 +97,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     socket!.add(utf8.encode(jsonEncode({"uID": uID, "type": "Matchmake", "data": {}})));
+    print("Sent Request");
   }
 
 

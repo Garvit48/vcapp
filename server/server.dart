@@ -29,23 +29,19 @@ class Room {
 
 Map<String, Socket> _matchmakingQueue = {};
 
-void matchmake() async {
+Future matchmake() async {
   List _players = _matchmakingQueue.keys.toList();
-  while (true) {
-    _players = _matchmakingQueue.keys.toList();
     if (_players.length >= 2) {
       Room(_players[0], _players[1], _matchmakingQueue[_players[0]], _matchmakingQueue[_players[1]]).start();
-      _matchmakingQueue.remove(_players[0]);
-      _matchmakingQueue.remove(_players[1]);
+      // _matchmakingQueue.remove(_players[0]);
+      // _matchmakingQueue.remove(_players[1]);
 
     }
-  }
 }
 
 void main() async {
   ServerSocket serverFuture = await ServerSocket.bind(InternetAddress.anyIPv4, 5050);
   print("Server Listening on ${InternetAddress.anyIPv4}:${5050}");
-  matchmake();
   serverFuture.listen((Socket client) {
 
     print("Connection from ${client.remoteAddress.address}:${client.port}");
@@ -66,10 +62,12 @@ void main() async {
 
       } else if (req["type"] == "Matchmake") {
         _matchmakingQueue[req["uID"]] = client;
+        matchmake();
         print(_matchmakingQueue.keys);
       }
     });
   });
+  print("Done");
 }
 
 
