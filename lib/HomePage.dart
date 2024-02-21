@@ -29,8 +29,7 @@ class _HomePageState extends State<HomePage> {
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   
 
-  dynamic _localStream;
-  dynamic _remoteStream;
+  MediaStream? _localStream;
   Socket? socket;
   RTCPeerConnection? _conn;
 
@@ -49,7 +48,7 @@ class _HomePageState extends State<HomePage> {
         
         RTCSessionDescription _offer = await _conn!.createOffer();
         _conn!.setLocalDescription(_offer);
-        _conn!.addStream(_localStream);
+        _conn!.addStream(_localStream!);
 
         setState(() { recGlobal = recvDecData["data"]["rec"]; });
 
@@ -72,7 +71,7 @@ class _HomePageState extends State<HomePage> {
         RTCSessionDescription _ans = await _conn!.createAnswer();
         _conn!.setLocalDescription(_ans);
 
-        _conn!.addStream(_localStream);
+        _conn!.addStream(_localStream!);
 
         
 
@@ -116,13 +115,17 @@ class _HomePageState extends State<HomePage> {
       })));
     };
 
-    _conn!.onAddStream = (MediaStream stream) {
-      setState( () { _remoteStream = stream; _remoteRenderer.srcObject = _remoteStream;} );
+    _conn!.onTrack = (e) {
+      _remoteRenderer.srcObject = e.streams[0];
+      setState(() {});
     };
 
     
-    _localStream = await navigator.mediaDevices.getUserMedia( { "audio": false, "video": true } );
+    _localStream = await navigator.mediaDevices.getUserMedia( { "audio": true, "video": true } );
     _localRenderer.srcObject = _localStream;
+    _localStream!.getTracks().forEach((track) {
+      _conn!.addTrack(track, _localStream!);
+    });
     setState(() {});
     
   }
