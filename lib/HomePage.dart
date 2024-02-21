@@ -33,17 +33,16 @@ class _HomePageState extends State<HomePage> {
   Socket? socket;
   RTCPeerConnection? _conn;
 
-  void matchmake() async {
-    socket = await Socket.connect("3.105.228.41", 5050);
-    socket!.listen((List<int> recvEncData) async {
-
+  void matchmake() {
+    Socket.connect("3.105.228.41", 5050).then((socket) {
+      socket.listen((List<int> recvEncData) {
 
       Map recvDecData = jsonDecode(String.fromCharCodes(recvEncData));
 
       if (recvDecData["type"] == "StartCallSender") {
         print("StartCallSender");
-        RTCSessionDescription _offer = await _conn!.createOffer();
-        _conn!.setLocalDescription(_offer);
+        _conn!.createOffer().then((RTCSessionDescription offer) {
+                  _conn!.setLocalDescription(offer);
 
         recGlobal = recvDecData["data"]["rec"];
         print(jsonEncode({
@@ -51,17 +50,19 @@ class _HomePageState extends State<HomePage> {
           "type": "NewCall",
           "data": {
             "rec": recGlobal,
-            "offer": {"sdp": _offer.sdp, "type": _offer.type}
+            "offer": {"sdp": offer.sdp, "type": offer.type}
           }
         }));
-        socket!.add(utf8.encode(jsonEncode({
+        socket.add(utf8.encode(jsonEncode({
           "sender": uID,
           "type": "NewCall",
           "data": {
             "rec": recGlobal,
-            "offer": {"sdp": "_offer.sdp", "type": _offer.type}
+            "offer": {"sdp": "_offer.sdp", "type": offer.type}
           }
         })));
+        });
+
       }
       
       else if (recvDecData["type"] == "NewCall") {
@@ -70,17 +71,19 @@ class _HomePageState extends State<HomePage> {
 
         RTCSessionDescription _incOffer = RTCSessionDescription(recvDecData["data"]["offer"]["sdp"], recvDecData["data"]["offer"]["type"]);
         _conn!.setRemoteDescription(_incOffer);
-        RTCSessionDescription _ans = await _conn!.createAnswer();
-        _conn!.setLocalDescription(_ans);
+        _conn!.createAnswer().then((RTCSessionDescription ans) {
+                  _conn!.setLocalDescription(ans);
 
-        socket!.add(utf8.encode(jsonEncode({
+        socket.add(utf8.encode(jsonEncode({
           "sender": uID,
           "type": "Answer",
           "data": {
             "rec": recGlobal,
-            "answer": {"sdp": _ans.sdp, "type": _ans.type}
+            "answer": {"sdp": ans.sdp, "type": ans.type}
           }
         })));
+        });
+
 
       } else if (recvDecData["type"] == "Answer") {
         RTCSessionDescription _ans = RTCSessionDescription(recvDecData["data"]["answer"]["sdp"], recvDecData["data"]["answer"]["type"]);
@@ -93,8 +96,10 @@ class _HomePageState extends State<HomePage> {
 
     });
 
-    socket!.add(utf8.encode(jsonEncode({"uID": uID, "type": "Matchmake", "data": {}})));
+    socket.add(utf8.encode(jsonEncode({"uID": uID, "type": "Matchmake", "data": {}})));
     print("Sent Request");
+    });
+    
   }
 
 
