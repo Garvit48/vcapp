@@ -62,7 +62,7 @@ void main() async {
        // _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "Matchmake") {
-        //_matchmakingQueue[req["uID"]] = client;
+        _matchmakingQueue[req["uID"]] = client;
         matchmake();
         print(_matchmakingQueue.keys);
       }
