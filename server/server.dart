@@ -30,6 +30,7 @@ class Room {
 Map<String, Socket> _matchmakingQueue = {};
 
 Future matchmake() async {
+  print("Strarted Matchmaking");
   List _players = _matchmakingQueue.keys.toList();
     if (_players.length >= 2) {
       Room(_players[0], _players[1], _matchmakingQueue[_players[0]], _matchmakingQueue[_players[1]]).start();
