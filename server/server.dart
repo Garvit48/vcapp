@@ -50,19 +50,19 @@ void main() async {
     client.listen((List<int> encReq) {
       Map req = jsonDecode(String.fromCharCodes(encReq));
       if (req["type"] == "NewCall") {
-        print("Call Started (NewCAll)");;
-        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+        print("Call Started (NewCAll)");
+        //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
         
       } else if (req["type"] == "Answer") {
         print("Call Answered (Answer)");
-        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+        //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "ICECandidate") {
         print("ICE Candidate being sent");
-        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+       // _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "Matchmake") {
-        _matchmakingQueue[req["uID"]] = client;
+        //_matchmakingQueue[req["uID"]] = client;
         matchmake();
         print(_matchmakingQueue.keys);
       }

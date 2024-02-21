@@ -34,22 +34,18 @@ class _HomePageState extends State<HomePage> {
   RTCPeerConnection? _conn;
 
   void matchmake() async {
-    print("Started");
     socket = await Socket.connect("3.105.228.41", 5050);
-    
-    print("Started");
     socket!.listen((List<int> recvEncData) async {
 
 
       Map recvDecData = jsonDecode(String.fromCharCodes(recvEncData));
 
       if (recvDecData["type"] == "StartCallSender") {
-
-        
+        print("StartCallSender");
         RTCSessionDescription _offer = await _conn!.createOffer();
         _conn!.setLocalDescription(_offer);
 
-        setState(() { recGlobal = recvDecData["data"]["rec"]; });
+        recGlobal = recvDecData["data"]["rec"];
         print(jsonEncode({
           "sender": uID,
           "type": "NewCall",
@@ -106,28 +102,28 @@ class _HomePageState extends State<HomePage> {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
     _conn = await createPeerConnection(_config);
-    _conn!.onIceCandidate = (e) {
-      socket!.add(utf8.encode(jsonEncode({
-        "uID": uID,
-        "type": "ICECandidate",
-        "data": {
-          "rec": recGlobal,
-          "ICECandidate": {"candidate": e.candidate, "sdpMid": e.sdpMid, "sdpMLineIndex": e.sdpMLineIndex}
-        }
-      })));
-    };
+    // _conn!.onIceCandidate = (e) {
+    //   socket!.add(utf8.encode(jsonEncode({
+    //     "uID": uID,
+    //     "type": "ICECandidate",
+    //     "data": {
+    //       "rec": recGlobal,
+    //       "ICECandidate": {"candidate": e.candidate, "sdpMid": e.sdpMid, "sdpMLineIndex": e.sdpMLineIndex}
+    //     }
+    //   })));
+    // };
 
-    _conn!.onTrack = (e) {
-      _remoteRenderer.srcObject = e.streams[0];
-      setState(() {});
-    };
+    // _conn!.onTrack = (e) {
+    //   _remoteRenderer.srcObject = e.streams[0];
+    //   setState(() {});
+    // };
 
     
     _localStream = await navigator.mediaDevices.getUserMedia( { "audio": true, "video": true } );
     _localRenderer.srcObject = _localStream;
-    _localStream!.getTracks().forEach((track) {
-      _conn!.addTrack(track, _localStream!);
-    });
+    // _localStream!.getTracks().forEach((track) {
+    //   _conn!.addTrack(track, _localStream!);
+    // });
     setState(() {});
     
   }
