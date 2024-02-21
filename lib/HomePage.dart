@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
           "type": "NewCall",
           "data": {
             "rec": recGlobal,
-            "offer": {"sdp": _offer.sdp, "type": _offer.type}
+            "offer": {"sdp": "_offer.sdp", "type": _offer.type}
           }
         })));
       }
