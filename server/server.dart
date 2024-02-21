@@ -31,7 +31,6 @@ class Room {
 Map<String, Socket> _matchmakingQueue = {};
 
 Future matchmake() async {
-  print("Strarted Matchmaking");
   List _players = _matchmakingQueue.keys.toList();
     if (_players.length >= 2) {
       Room(_players[0], _players[1], _matchmakingQueue[_players[0]], _matchmakingQueue[_players[1]]).start();
@@ -51,15 +50,15 @@ void main() async {
     client.listen((List<int> encReq) {
       Map req = jsonDecode(String.fromCharCodes(encReq));
       if (req["type"] == "NewCall") {
-
+        print("Call Started (NewCAll)");;
         _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
         
       } else if (req["type"] == "Answer") {
-
+        print("Call Answered (Answer)");
         _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "ICECandidate") {
-
+        print("ICE Candidate being sent");
         _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "Matchmake") {
