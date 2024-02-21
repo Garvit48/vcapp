@@ -50,7 +50,14 @@ class _HomePageState extends State<HomePage> {
         _conn!.setLocalDescription(_offer);
 
         setState(() { recGlobal = recvDecData["data"]["rec"]; });
-
+        print(jsonEncode({
+          "sender": uID,
+          "type": "NewCall",
+          "data": {
+            "rec": recGlobal,
+            "offer": {"sdp": _offer.sdp, "type": _offer.type}
+          }
+        }));
         socket!.add(utf8.encode(jsonEncode({
           "sender": uID,
           "type": "NewCall",
