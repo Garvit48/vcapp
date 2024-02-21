@@ -48,7 +48,6 @@ class _HomePageState extends State<HomePage> {
         
         RTCSessionDescription _offer = await _conn!.createOffer();
         _conn!.setLocalDescription(_offer);
-        _conn!.addStream(_localStream!);
 
         setState(() { recGlobal = recvDecData["data"]["rec"]; });
 
@@ -70,10 +69,6 @@ class _HomePageState extends State<HomePage> {
         _conn!.setRemoteDescription(_incOffer);
         RTCSessionDescription _ans = await _conn!.createAnswer();
         _conn!.setLocalDescription(_ans);
-
-        _conn!.addStream(_localStream!);
-
-        
 
         socket!.add(utf8.encode(jsonEncode({
           "sender": uID,
