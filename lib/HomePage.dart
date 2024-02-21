@@ -9,6 +9,8 @@ const Map<String, dynamic> _config = {
       'urls': [
         'stun:stun1.l.google.com:19302',
         'stun:stun2.l.google.com:19302',
+        'stun:stun3.l.google.com:19302',
+        'stun:stun4.l.google.com:19302',
       ],
     }
   ]
@@ -31,47 +33,41 @@ class _HomePageState extends State<HomePage> {
 
   MediaStream? _localStream;
   Socket? socket;
-  RTCPeerConnection? _conn;
+  RTCPeerConnection? conn;
+
 
   void matchmake() async {
-    socket = await Socket.connect("3.105.228.41", 5050);
-    socket!.listen((List<int> recvEncData) async {
+    socket = await Socket.connect("192.168.217.1", 5050);
+    await socket!.listen((List<int> recvEncData) async {
 
+       Map recvDecData = jsonDecode(String.fromCharCodes(recvEncData));
 
-      Map recvDecData = jsonDecode(String.fromCharCodes(recvEncData));
-
-      if (recvDecData["type"] == "StartCallSender") {
+       if (recvDecData["type"] == "StartCallSender") {
         print("StartCallSender");
-        RTCSessionDescription _offer = await _conn!.createOffer();
-        _conn!.setLocalDescription(_offer);
+        RTCSessionDescription offer = await conn!.createOffer();
+        conn!.setLocalDescription(offer);
 
         recGlobal = recvDecData["data"]["rec"];
-        print(jsonEncode({
-          "sender": uID,
-          "type": "NewCall",
-          "data": {
-            "rec": recGlobal,
-            "offer": {"sdp": _offer.sdp, "type": _offer.type}
-          }
-        }));
+        
         socket!.add(utf8.encode(jsonEncode({
           "sender": uID,
           "type": "NewCall",
           "data": {
             "rec": recGlobal,
-            "offer": {"sdp": "_offer.sdp", "type": _offer.type}
+            "offer": {"sdp": offer.sdp, "type": offer.type}
           }
         })));
-      }
+        
+       }
       
       else if (recvDecData["type"] == "NewCall") {
 
         setState(() { recGlobal = recvDecData["sender"]; });
 
         RTCSessionDescription _incOffer = RTCSessionDescription(recvDecData["data"]["offer"]["sdp"], recvDecData["data"]["offer"]["type"]);
-        _conn!.setRemoteDescription(_incOffer);
-        RTCSessionDescription _ans = await _conn!.createAnswer();
-        _conn!.setLocalDescription(_ans);
+        conn!.setRemoteDescription(_incOffer);
+        RTCSessionDescription _ans = await conn!.createAnswer();
+        conn!.setLocalDescription(_ans);
 
         socket!.add(utf8.encode(jsonEncode({
           "sender": uID,
@@ -85,17 +81,15 @@ class _HomePageState extends State<HomePage> {
       } else if (recvDecData["type"] == "Answer") {
         RTCSessionDescription _ans = RTCSessionDescription(recvDecData["data"]["answer"]["sdp"], recvDecData["data"]["answer"]["type"]);
 
-        _conn!.setRemoteDescription(_ans);
+        conn!.setRemoteDescription(_ans);
 
       } else if (recvDecData["ICECandidate"]) {
-        _conn!.addCandidate(RTCIceCandidate(recvDecData["data"]["ICECandidate"]["candidate"], recvDecData["data"]["ICECandidate"]["sdpMid"], recvDecData["data"]["ICECandidate"]["sdpMLineIndex"]));
+        conn!.addCandidate(RTCIceCandidate(recvDecData["data"]["ICECandidate"]["candidate"], recvDecData["data"]["ICECandidate"]["sdpMid"], recvDecData["data"]["ICECandidate"]["sdpMLineIndex"]));
       }
 
     });
 
-    socket!.add(utf8.encode(jsonEncode({"uID": uID, "type": "Matchmake", "data": {
-      "rec": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-    }})));
+    socket!.add(utf8.encode(jsonEncode({"uID": uID, "type": "Matchmake", "data": {}})));
     print("Sent Request");
   }
 
@@ -103,29 +97,29 @@ class _HomePageState extends State<HomePage> {
   void initAsync() async {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
-    _conn = await createPeerConnection(_config);
-    // _conn!.onIceCandidate = (e) {
-    //   socket!.add(utf8.encode(jsonEncode({
-    //     "uID": uID,
-    //     "type": "ICECandidate",
-    //     "data": {
-    //       "rec": recGlobal,
-    //       "ICECandidate": {"candidate": e.candidate, "sdpMid": e.sdpMid, "sdpMLineIndex": e.sdpMLineIndex}
-    //     }
-    //   })));
-    // };
+    conn = await createPeerConnection(_config);
+    conn!.onIceCandidate = (e) {
+      socket!.add(utf8.encode(jsonEncode({
+        "uID": uID,
+        "type": "ICECandidate",
+        "data": {
+          "rec": recGlobal,
+          "ICECandidate": {"candidate": e.candidate, "sdpMid": e.sdpMid, "sdpMLineIndex": e.sdpMLineIndex}
+        }
+      })));
+    };
 
-    // _conn!.onTrack = (e) {
-    //   _remoteRenderer.srcObject = e.streams[0];
-    //   setState(() {});
-    // };
+    conn!.onTrack = (e) {
+      _remoteRenderer.srcObject = e.streams[0];
+      setState(() {});
+    };
 
     
     _localStream = await navigator.mediaDevices.getUserMedia( { "audio": true, "video": true } );
     _localRenderer.srcObject = _localStream;
-    // _localStream!.getTracks().forEach((track) {
-    //   _conn!.addTrack(track, _localStream!);
-    // });
+    _localStream!.getTracks().forEach((track) {
+      conn!.addTrack(track, _localStream!);
+    });
     setState(() {});
     
   }
@@ -153,7 +147,7 @@ class _HomePageState extends State<HomePage> {
         TextField(
           controller: _callerIDController,
         ),
-        OutlinedButton(onPressed: matchmake, child: Text("Start Call"))
+        OutlinedButton(onPressed: () async {matchmake();}, child: Text("Start Call"))
       ]),
     );
   }

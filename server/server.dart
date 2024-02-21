@@ -43,33 +43,39 @@ Future matchmake() async {
 void main() async {
   ServerSocket serverFuture = await ServerSocket.bind(InternetAddress.anyIPv4, 5050);
   print("Server Listening on ${InternetAddress.anyIPv4}:${5050}");
-  serverFuture.listen((Socket client) {
+
+
+  serverFuture.listen((Socket client) async {
 
     print("Connection from ${client.remoteAddress.address}:${client.port}");
     
-    client.listen((List<int> encReq) {
-      Map req = jsonDecode(String.fromCharCodes(encReq));
+    client.listen((List<int> encReq) async {
+
+      String str = String.fromCharCodes(encReq);
+      Map req = jsonDecode(str);
+
+
       if (req["type"] == "NewCall") {
+
         print(req["data"]["offer"]);
-        //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
         
       } else if (req["type"] == "Answer") {
+
         print("Call Answered (Answer)");
-        //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "ICECandidate") {
+
         print("ICE Candidate being sent");
-       // _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+       _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
       } else if (req["type"] == "Matchmake") {
+
         _matchmakingQueue[req["uID"]] = client;
         matchmake();
-        print(_matchmakingQueue.keys);
-        print(req["data"]["rec"]);
-      }
-    });
+
+    }});
   });
   print("Done");
 }
-
-
