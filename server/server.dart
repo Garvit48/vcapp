@@ -50,7 +50,7 @@ void main() async {
     client.listen((List<int> encReq) {
       Map req = jsonDecode(String.fromCharCodes(encReq));
       if (req["type"] == "NewCall") {
-        print("Call Started (NewCAll)");
+        print(req["data"]["offer"]);
         //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
         
       } else if (req["type"] == "Answer") {
