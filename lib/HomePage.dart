@@ -38,13 +38,29 @@ class _HomePageState extends State<HomePage> {
   RTCPeerConnection? conn;
 
   void send(Map formattedData) {
-    String msg = jsonEncode(formattedData);
-    socket!.add(utf8.encode("--$msg--"));
+    const _lineLength = 200;
+    int start = 0;
+    int end = _lineLength;
+    String currStr;
+    String msg =  "--${jsonEncode(formattedData)}--";
+    int strLen = msg.length;
+    if (msg.length > _lineLength) {
+      while (strLen > 0) {
+        currStr = msg.substring(start, end);
+        strLen -= _lineLength;
+        start = end;
+        end += (strLen > _lineLength) ? _lineLength : strLen;
+        socket!.add(utf8.encode(msg));
+      }
+      
+    } else {
+      socket!.add(utf8.encode(msg));
+    }
   }
 
-
+//3.105.228.41
   void matchmake() async {
-    socket = await Socket.connect("172.20.10.6", 5050);
+    socket = await Socket.connect("3.105.228.41", 5050);
     await socket!.listen((List<int> recvEncData) async {
 
         String str = String.fromCharCodes(recvEncData);

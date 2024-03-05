@@ -44,46 +44,59 @@ void main() async {
   ServerSocket serverFuture = await ServerSocket.bind(InternetAddress.anyIPv4, 5050);
   print("Server Listening on ${InternetAddress.anyIPv4}:${5050}");
 
+  
 
-  serverFuture.listen((Socket client) async {
-
+  serverFuture.listen((Socket client) {
+    String data = "";
     print("Connection from ${client.remoteAddress.address}:${client.port}");
     
-    client.listen((List<int> encReq) async {
+    client.listen((List<int> encReq) {
 
       String str = String.fromCharCodes(encReq);
-      List objs = str.split("--");
-      print(objs);
+      data += str;
+      if (data[data.length - 1] == "-" && data[data.length - 2] == "-") {
+          List objs = data.split("--");
+          print(objs);
 
-      for (int i = 0; i < objs.length; i++) {
-        String currObjStr = objs[i];
+          for (int i = 0; i < objs.length; i++) {
+            String currObjStr = objs[i];
 
-        if (currObjStr != "") {
-                  Map req = jsonDecode(currObjStr);
+            if (currObjStr != "") {
+                      Map req = jsonDecode(currObjStr);
 
-        if (req["type"] == "NewCall") {
-          _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-          
-        } else if (req["type"] == "Answer") {
+            if (req["type"] == "NewCall") {
+              //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+              
+            } else if (req["type"] == "Answer") {
 
-          print("Call Answered (Answer)");
-          _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+              print("Call Answered (Answer)");
+              //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
 
-        } else if (req["type"] == "ICECandidate") {
+            } else if (req["type"] == "ICECandidate") {
 
-          print("Candidate Receieved");
-        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-  
-        } else if (req["type"] == "Matchmake") {
+              print("Candidate Receieved");
+            //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+      
+            } else if (req["type"] == "Matchmake") {
 
-          _matchmakingQueue[req["uID"]] = client;
-          matchmake();
+              _matchmakingQueue[req["uID"]] = client;
+              matchmake();
+                        client.add(utf8.encode(jsonEncode({
+            "uID": "",
+            "type": "StartCallSender",
+            "data": {
+              "rec": ""
+            }
+          })));
+          }
+            }
 
+          }
+
+          data = "";
       }
-        }
 
-      }
 });
-  });
+  }, onDone: () => {print("Data Recieved")});
   print("Done");
 }
