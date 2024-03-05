@@ -52,30 +52,38 @@ void main() async {
     client.listen((List<int> encReq) async {
 
       String str = String.fromCharCodes(encReq);
-      Map req = jsonDecode(str);
+      List objs = str.split("--");
+      print(objs);
 
+      for (int i = 0; i < objs.length; i++) {
+        String currObjStr = objs[i];
 
-      if (req["type"] == "NewCall") {
+        if (currObjStr != "") {
+                  Map req = jsonDecode(currObjStr);
 
-        print(req["data"]["offer"]);
+        if (req["type"] == "NewCall") {
+          _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+          
+        } else if (req["type"] == "Answer") {
+
+          print("Call Answered (Answer)");
+          _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+
+        } else if (req["type"] == "ICECandidate") {
+
+          print("Candidate Receieved");
         _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-        
-      } else if (req["type"] == "Answer") {
+  
+        } else if (req["type"] == "Matchmake") {
 
-        print("Call Answered (Answer)");
-        _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+          _matchmakingQueue[req["uID"]] = client;
+          matchmake();
 
-      } else if (req["type"] == "ICECandidate") {
+      }
+        }
 
-        print("ICE Candidate being sent");
-       _matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-
-      } else if (req["type"] == "Matchmake") {
-
-        _matchmakingQueue[req["uID"]] = client;
-        matchmake();
-
-    }});
+      }
+});
   });
   print("Done");
 }

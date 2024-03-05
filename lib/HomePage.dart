@@ -26,6 +26,8 @@ class _HomePageState extends State<HomePage> {
 
   final String uID = "Player2";
   String recGlobal = "";
+  int count = 0;
+  List<RTCIceCandidate> candidates = [];
 
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
@@ -35,61 +37,77 @@ class _HomePageState extends State<HomePage> {
   Socket? socket;
   RTCPeerConnection? conn;
 
+  void send(Map formattedData) {
+    String msg = jsonEncode(formattedData);
+    socket!.add(utf8.encode("--$msg--"));
+  }
+
 
   void matchmake() async {
-    socket = await Socket.connect("192.168.217.1", 5050);
+    socket = await Socket.connect("172.20.10.6", 5050);
     await socket!.listen((List<int> recvEncData) async {
 
-       Map recvDecData = jsonDecode(String.fromCharCodes(recvEncData));
+        String str = String.fromCharCodes(recvEncData);
+        List objs = str.split("--");
 
-       if (recvDecData["type"] == "StartCallSender") {
-        print("StartCallSender");
-        RTCSessionDescription offer = await conn!.createOffer();
-        conn!.setLocalDescription(offer);
+        for (int i = 0; i < objs.length; i++) {
+          Map recvDecData = jsonDecode(objs[i]);
 
-        recGlobal = recvDecData["data"]["rec"];
-        
-        socket!.add(utf8.encode(jsonEncode({
-          "sender": uID,
-          "type": "NewCall",
-          "data": {
-            "rec": recGlobal,
-            "offer": {"sdp": offer.sdp, "type": offer.type}
+          if (recvDecData["type"] == "StartCallSender") {
+            print("StartCallSender");
+
+            RTCSessionDescription offer = await conn!.createOffer();
+            conn!.setLocalDescription(offer);
+
+            recGlobal = recvDecData["data"]["rec"];
+            
+            send({
+              "sender": uID,
+              "type": "NewCall",
+              "data": {
+                "rec": recGlobal,
+                "offer": {"sdp": offer.sdp, "type": offer.type}
+              }
+            });
+            
           }
-        })));
-        
-       }
-      
-      else if (recvDecData["type"] == "NewCall") {
+          
+          else if (recvDecData["type"] == "NewCall") {
 
-        setState(() { recGlobal = recvDecData["sender"]; });
+            setState(() { recGlobal = recvDecData["sender"]; });
 
-        RTCSessionDescription _incOffer = RTCSessionDescription(recvDecData["data"]["offer"]["sdp"], recvDecData["data"]["offer"]["type"]);
-        conn!.setRemoteDescription(_incOffer);
-        RTCSessionDescription _ans = await conn!.createAnswer();
-        conn!.setLocalDescription(_ans);
+            RTCSessionDescription _incOffer = RTCSessionDescription(recvDecData["data"]["offer"]["sdp"], recvDecData["data"]["offer"]["type"]);
+            conn!.setRemoteDescription(_incOffer);
+            RTCSessionDescription _ans = await conn!.createAnswer();
+            conn!.setLocalDescription(_ans);
 
-        socket!.add(utf8.encode(jsonEncode({
-          "sender": uID,
-          "type": "Answer",
-          "data": {
-            "rec": recGlobal,
-            "answer": {"sdp": _ans.sdp, "type": _ans.type}
+            send({
+              "sender": uID,
+              "type": "Answer",
+              "data": {
+                "rec": recGlobal,
+                "answer": {"sdp": _ans.sdp, "type": _ans.type}
+              }
+            });
+            
+
+          } else if (recvDecData["type"] == "Answer") {
+            RTCSessionDescription _ans = RTCSessionDescription(recvDecData["data"]["answer"]["sdp"], recvDecData["data"]["answer"]["type"]);
+
+            conn!.setRemoteDescription(_ans);
+
+          } else if (recvDecData["type"] == "ICECandidate") {
+
+            conn!.addCandidate(RTCIceCandidate(recvDecData["data"]["ICECandidate"]["candidate"], recvDecData["data"]["ICECandidate"]["sdpMid"], recvDecData["data"]["ICECandidate"]["sdpMLineIndex"]));
+
+
           }
-        })));
+        }
 
-      } else if (recvDecData["type"] == "Answer") {
-        RTCSessionDescription _ans = RTCSessionDescription(recvDecData["data"]["answer"]["sdp"], recvDecData["data"]["answer"]["type"]);
-
-        conn!.setRemoteDescription(_ans);
-
-      } else if (recvDecData["ICECandidate"]) {
-        conn!.addCandidate(RTCIceCandidate(recvDecData["data"]["ICECandidate"]["candidate"], recvDecData["data"]["ICECandidate"]["sdpMid"], recvDecData["data"]["ICECandidate"]["sdpMLineIndex"]));
-      }
 
     });
 
-    socket!.add(utf8.encode(jsonEncode({"uID": uID, "type": "Matchmake", "data": {}})));
+    send({"uID": uID, "type": "Matchmake", "data": {}});
     print("Sent Request");
   }
 
@@ -98,16 +116,20 @@ class _HomePageState extends State<HomePage> {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
     conn = await createPeerConnection(_config);
-    conn!.onIceCandidate = (e) {
-      socket!.add(utf8.encode(jsonEncode({
-        "uID": uID,
-        "type": "ICECandidate",
-        "data": {
-          "rec": recGlobal,
-          "ICECandidate": {"candidate": e.candidate, "sdpMid": e.sdpMid, "sdpMLineIndex": e.sdpMLineIndex}
-        }
-      })));
+
+        conn!.onIceCandidate = (e) {
+          send({
+              "uID": uID,
+              "type": "ICECandidate",
+              "data": {
+                "rec": recGlobal,
+                "ICECandidate": {"candidate": e.candidate, "sdpMid": e.sdpMid, "sdpMLineIndex": e.sdpMLineIndex}
+              }
+          });
+
+          
     };
+    
 
     conn!.onTrack = (e) {
       _remoteRenderer.srcObject = e.streams[0];
