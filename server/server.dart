@@ -23,29 +23,29 @@ class Room {
         "rec": pn2
       }
     })));
+
     print("Call Started");
   }
-  
+
 }
 
-  void send(Map formattedData, Socket? socket) {
+  void forward(String encodedData, Socket? socket) {
     const _lineLength = 200;
     int start = 0;
     int end = _lineLength;
     String currStr;
-    String msg =  "--${jsonEncode(formattedData)}--";
-    int strLen = msg.length;
-    if (msg.length > _lineLength) {
+    int strLen = encodedData.length;
+    if (encodedData.length > _lineLength) {
       while (strLen > 0) {
-        currStr = msg.substring(start, end);
+        currStr = encodedData.substring(start, end);
         strLen -= _lineLength;
         start = end;
         end += (strLen > _lineLength) ? _lineLength : strLen;
-        socket!.add(utf8.encode(msg));
+        socket!.add(utf8.encode(currStr));
       }
 
     } else {
-      socket!.add(utf8.encode(msg));
+      socket!.add(utf8.encode(encodedData));
     }
   }
 
@@ -65,49 +65,43 @@ void main() async {
   ServerSocket serverFuture = await ServerSocket.bind(InternetAddress.anyIPv4, 5050);
   print("Server Listening on ${InternetAddress.anyIPv4}:${5050}");
 
-  
-
   serverFuture.listen((Socket client) {
     String data = "";
     print("Connection from ${client.remoteAddress.address}:${client.port}");
-    
+
     client.listen((List<int> encReq) {
 
       String str = String.fromCharCodes(encReq);
       data += str;
-      print("Data Appended: \n\n ${str}");
       if (data[data.length - 1] == "-" && data[data.length - 2] == "-") {
           List objs = data.split("--");
+
           for (int i = 0; i < objs.length; i++) {
             String currObjStr = objs[i];
 
             if (currObjStr != "") {
+                print("Not Empty String ${currObjStr}");
                       Map req = jsonDecode(currObjStr);
+
             if (req["type"] == "NewCall") {
-              //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-              //client.add();
+                print("NewCall Making (Offer)");
+                forward(data, _matchmakingQueue[req["data"]["rec"]]);
 
-            } else if (req["type"] == "Answer") {
+              } else if (req["type"] == "Answer") {
 
-              print("Call Answered (Answer)");
-              //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
+              print("Call Answered (Offer)");
+              forward(data, _matchmakingQueue[req["data"]["rec"]]);
 
             } else if (req["type"] == "ICECandidate") {
 
-              print("Candidate Receieved");
-            //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-      
+              print("Candidate Exchange");
+              forward(data, _matchmakingQueue[req["data"]["rec"]]);
+
             } else if (req["type"] == "Matchmake") {
 
               _matchmakingQueue[req["uID"]] = client;
-              matchmake();
-                        send({
-            "uID": "",
-            "type": "StartCallSender",
-            "data": {
-              "rec": ""
-            }
-          }, client);
+                matchmake();
+
           }
             }
 
@@ -116,7 +110,7 @@ void main() async {
           data = "";
       }
 
-});
+      });
   }, onDone: () => {print("Data Recieved")});
   print("Done");
 }

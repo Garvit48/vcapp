@@ -63,8 +63,13 @@ class _HomePageState extends State<HomePage> {
     socket = await Socket.connect("3.105.228.41", 5050);
     await socket!.listen((List<int> recvEncData) async {
 
+        String data = "";
         String str = String.fromCharCodes(recvEncData);
+        data += str;
+
+        if (data[data.length - 1] == "-" && data[data.length - 2] == "-") {
         List objs = str.split("--");
+        print(objs);
         for (int i = 0; i < objs.length; i++) {
           if (objs[i] != "") {
           Map recvDecData = jsonDecode(objs[i]);
@@ -97,7 +102,7 @@ class _HomePageState extends State<HomePage> {
             RTCSessionDescription _incOffer = RTCSessionDescription(recvDecData["data"]["offer"]["sdp"], recvDecData["data"]["offer"]["type"]);
             conn!.setRemoteDescription(_incOffer);
             RTCSessionDescription _ans = await conn!.createAnswer();
-            conn!.setLocalDescription(_ans);
+            //conn!.setLocalDescription(_ans);
 
             send({
               "sender": uID,
@@ -113,7 +118,7 @@ class _HomePageState extends State<HomePage> {
           print("Amswering");
             RTCSessionDescription _ans = RTCSessionDescription(recvDecData["data"]["answer"]["sdp"], recvDecData["data"]["answer"]["type"]);
 
-            conn!.setRemoteDescription(_ans);
+            //conn!.setRemoteDescription(_ans);
 
           } else if (recvDecData["type"] == "ICECandidate") {
             print("Got ICE Candidate");
@@ -122,7 +127,7 @@ class _HomePageState extends State<HomePage> {
 
           }
           }
-        }
+        }}
 
 
     });
@@ -194,3 +199,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
