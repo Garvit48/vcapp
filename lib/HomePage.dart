@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
 
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
-  
+
 
   MediaStream? _localStream;
   Socket? socket;
@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
         strLen -= _lineLength;
         start = end;
         end += (strLen > _lineLength) ? _lineLength : strLen;
-        socket!.add(utf8.encode(msg));
+        socket!.add(utf8.encode(currStr));
       }
       
     } else {
@@ -65,12 +65,12 @@ class _HomePageState extends State<HomePage> {
 
         String str = String.fromCharCodes(recvEncData);
         List objs = str.split("--");
-
         for (int i = 0; i < objs.length; i++) {
+          if (objs[i] != "") {
           Map recvDecData = jsonDecode(objs[i]);
 
           if (recvDecData["type"] == "StartCallSender") {
-            print("StartCallSender");
+
 
             RTCSessionDescription offer = await conn!.createOffer();
             conn!.setLocalDescription(offer);
@@ -86,10 +86,12 @@ class _HomePageState extends State<HomePage> {
               }
             });
             
+            print("StartCallSender");
+
           }
           
           else if (recvDecData["type"] == "NewCall") {
-
+          print("Reciving Call");
             setState(() { recGlobal = recvDecData["sender"]; });
 
             RTCSessionDescription _incOffer = RTCSessionDescription(recvDecData["data"]["offer"]["sdp"], recvDecData["data"]["offer"]["type"]);
@@ -108,15 +110,17 @@ class _HomePageState extends State<HomePage> {
             
 
           } else if (recvDecData["type"] == "Answer") {
+          print("Amswering");
             RTCSessionDescription _ans = RTCSessionDescription(recvDecData["data"]["answer"]["sdp"], recvDecData["data"]["answer"]["type"]);
 
             conn!.setRemoteDescription(_ans);
 
           } else if (recvDecData["type"] == "ICECandidate") {
-
+            print("Got ICE Candidate");
             conn!.addCandidate(RTCIceCandidate(recvDecData["data"]["ICECandidate"]["candidate"], recvDecData["data"]["ICECandidate"]["sdpMid"], recvDecData["data"]["ICECandidate"]["sdpMLineIndex"]));
 
 
+          }
           }
         }
 
@@ -147,9 +151,9 @@ class _HomePageState extends State<HomePage> {
     };
     
 
-    conn!.onTrack = (e) {
+      conn!.onTrack = (e) {
       _remoteRenderer.srcObject = e.streams[0];
-      setState(() {});
+      setState(() {print("Remote Stream Added");});
     };
 
     
@@ -158,7 +162,7 @@ class _HomePageState extends State<HomePage> {
     _localStream!.getTracks().forEach((track) {
       conn!.addTrack(track, _localStream!);
     });
-    setState(() {});
+    setState(() {print("Local Video Stream Added");});
     
   }
   @override

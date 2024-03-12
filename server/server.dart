@@ -28,6 +28,27 @@ class Room {
   
 }
 
+  void send(Map formattedData, Socket? socket) {
+    const _lineLength = 200;
+    int start = 0;
+    int end = _lineLength;
+    String currStr;
+    String msg =  "--${jsonEncode(formattedData)}--";
+    int strLen = msg.length;
+    if (msg.length > _lineLength) {
+      while (strLen > 0) {
+        currStr = msg.substring(start, end);
+        strLen -= _lineLength;
+        start = end;
+        end += (strLen > _lineLength) ? _lineLength : strLen;
+        socket!.add(utf8.encode(msg));
+      }
+
+    } else {
+      socket!.add(utf8.encode(msg));
+    }
+  }
+
 Map<String, Socket> _matchmakingQueue = {};
 
 Future matchmake() async {
@@ -54,19 +75,18 @@ void main() async {
 
       String str = String.fromCharCodes(encReq);
       data += str;
+      print("Data Appended: \n\n ${str}");
       if (data[data.length - 1] == "-" && data[data.length - 2] == "-") {
           List objs = data.split("--");
-          print(objs);
-
           for (int i = 0; i < objs.length; i++) {
             String currObjStr = objs[i];
 
             if (currObjStr != "") {
                       Map req = jsonDecode(currObjStr);
-
             if (req["type"] == "NewCall") {
               //_matchmakingQueue[req["data"]["rec"]]?.add(encReq);
-              
+              //client.add();
+
             } else if (req["type"] == "Answer") {
 
               print("Call Answered (Answer)");
@@ -81,13 +101,13 @@ void main() async {
 
               _matchmakingQueue[req["uID"]] = client;
               matchmake();
-                        client.add(utf8.encode(jsonEncode({
+                        send({
             "uID": "",
             "type": "StartCallSender",
             "data": {
               "rec": ""
             }
-          })));
+          }, client);
           }
             }
 
